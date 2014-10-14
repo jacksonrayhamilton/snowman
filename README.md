@@ -27,7 +27,7 @@ protected members may still be changed from within. Snowman lets *you* decide
 whether you are responsible enough to design a stateful API, or disciplined
 enough to never reassign internal values.
 
-Let it snow let it snow let it snow...
+Let it snow, let it snow, let it snow...
 
 ## Usage
 
@@ -91,7 +91,8 @@ var Lich = snowman({
         Object.defineProperties(this, {
             taunt: {
                 value: function (which) {
-                    console.log('I think I\'ll use "' + $protected.spells[which] + '"... JUST KIDDING');
+                    console.log('I think I\'ll use "' +
+                                $protected.spells[which] + '"... JUST KIDDING');
                 }
             },
             kill: {
@@ -136,5 +137,6 @@ snape.taunt(1);
 snape.kill(0);
 // Avada Kedavra!!!
 
-// slow motion
+// slow motion fall
+// much weeping
 ```
