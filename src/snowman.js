@@ -1,4 +1,5 @@
 /*global define, exports, module */
+
 /*
  * @license The MIT License (MIT)
  *
@@ -21,6 +22,10 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ */
+
+/**
+ * @module {Function} snowman
  */
 (function (root, factory) {
     'use strict';
@@ -47,6 +52,8 @@
          * Reusable no-op to conserve memory.
          *
          * @private
+         * @function
+         * @returns {undefined} Returns nothing.
          */
         noop = function () {
             return;
@@ -82,6 +89,7 @@
     /**
      * Creates an extensible, immutable-from-the-outside class.
      *
+     * @function
      * @param {Object} parameters Container for arguments.
      * @param {Function} parameters.extends Constructor of the parent class to
      * extend. Can be built-in classes, classes defined with or without
