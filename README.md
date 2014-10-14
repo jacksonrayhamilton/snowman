@@ -27,7 +27,7 @@ protected members may still be changed from within. Snowman lets *you* decide
 whether you are responsible enough to design a stateful API, or disciplined
 enough to never reassign internal values.
 
-Let it snow, let it snow, let it snow...
+Let it snow, let it snow, let it snow... ❄
 
 ## Usage
 
