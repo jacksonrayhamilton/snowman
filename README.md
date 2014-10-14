@@ -1,4 +1,4 @@
-# snowman.js
+# snowman ☃
 
 Immutable, inheritable objects with information hiding.
 
