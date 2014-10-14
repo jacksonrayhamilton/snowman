@@ -31,9 +31,34 @@ Let it snow, let it snow, let it snow... ❄
 
 ## Usage
 
+Browser:
+
 ```html
 <script src="snowman.js"></script>
 ```
+
+```js
+(function (snowman) {
+    var Class = snowman({});
+}(window.snowman));
+```
+
+Node / CommonJS:
+
+```js
+var snowman = require('snowman');
+var Class = snowman({});
+```
+
+AMD:
+
+```js
+require(['snowman'], function (snowman) {
+    var Class = snowman({});
+});
+```
+
+## Example
 
 ```js
 var Person = snowman({
