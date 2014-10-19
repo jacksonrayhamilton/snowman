@@ -1,3 +1,5 @@
+/*jslint node: true */
+
 'use strict';
 
 module.exports = function (grunt) {
@@ -38,7 +40,10 @@ module.exports = function (grunt) {
 
         watch: {
             test: {
-                files: ['src/*.js'],
+                files: [
+                    'src/*.js',
+                    'test/*.js'
+                ],
                 tasks: 'test'
             }
         }
@@ -46,9 +51,7 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('test', ['mochaTest']);
-
     grunt.registerTask('build', ['uglify']);
-
     grunt.registerTask('default', ['jslint', 'test', 'build']);
 
 };

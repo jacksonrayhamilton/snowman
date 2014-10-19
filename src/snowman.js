@@ -24,231 +24,206 @@
  * THE SOFTWARE.
  */
 
-/**
- * @module {Function} snowman
- */
-(function (root, factory) {
-    'use strict';
-    if (typeof define === 'function' && define.amd) {
-        define([], factory);
-    } else if (typeof exports === 'object') {
-        module.exports = factory();
-    } else {
-        root.snowman = factory();
-    }
-}(this, function () {
+(function (root) {
 
     'use strict';
 
-    // Stash references for performance.
-    var slice = Function.prototype.call.bind(Array.prototype.slice),
-        create = Object.create,
-        defineProperty = Object.defineProperty,
-        defineProperties = Object.defineProperties,
-        freeze = Object.freeze,
-        isFrozen = Object.isFrozen,
+    (function (factory) {
+        if (typeof define === 'function' && define.amd) {
+            define([], factory);
+        } else if (typeof exports === 'object') {
+            module.exports = factory();
+        } else {
+            root.snowman = factory();
+        }
+    }(function () {
 
-        /**
-         * Reusable no-op to conserve memory.
-         *
-         * @private
-         * @function
-         * @returns {undefined} Returns nothing.
-         */
-        noop = function () {
-            return;
-        },
+        // Function references for brevity and efficiency.
+        var create = Object.create,
+            defineProperties = Object.defineProperties,
+            freeze = Object.freeze,
+            hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
+            slice = Function.prototype.call.bind(Array.prototype.slice),
 
-        /**
-         * Special container which only this closure has access to, whose
-         * references can be "validated for authenticity" with `instanceof`,
-         * preventing users from otherwise dropping in their own objects and
-         * dredging up internal data.
-         *
-         * Having an instance of this object passed as the last argument to a
-         * constructor implies that the constructor function is in an
-         * "inheriting" state, so it will delay freezing itself until there are
-         * no more parents that might like to define properties.
-         *
-         * To ensure that the protected static container passed to
-         * pseudo-constructors is always frozen, this object is a dredge for
-         * constructor invocations, which are queued and invoked after the
-         * protected static container is frozen.
-         *
-         * @private
-         * @constructor
-         * @property {Array.<Function>} pseudoConstructorExecutorQueue - Queue
-         * of functions to execute to instantiate an object.
-         */
-        Inheritance = function () {
-            this.pseudoConstructorExecutorQueue = [];
-        },
+            // Noop array.
+            empty = [],
 
-        snowman;
+            // Gets property descriptors describing properties which delegate
+            // their values to `receiver`.
+            getDelegators = function (receiver, names) {
+                var map = {};
+                names.forEach(function (name) {
+                    var set = false;
+                    map[name] = {
+                        set: function (value) {
+                            if (set) {
+                                throw new TypeError('Cannot reassign property `' + name + '\'.');
+                            }
+                            receiver[name] = value;
+                            set = true;
+                        },
+                        get: function () {
+                            // Don't dredge properties out of the prototype.
+                            if (hasOwnProperty(receiver, name)) {
+                                return receiver[name];
+                            }
+                            return undefined;
+                        }
+                    };
+                });
+                return map;
+            },
 
-    /**
-     * Creates an extensible, immutable-from-the-outside class.
-     *
-     * @function
-     * @param {Object} parameters Container for arguments.
-     * @param {Function} parameters.extends Constructor of the parent class to
-     * extend. Can be built-in classes, classes defined with or without
-     * snowman, or `null`. Defaults to `Object`.
-     * @param {Function} parameters.constructor Pseudo-constructor containing
-     * all the logic a constructor function normally would have. The "real"
-     * constructor returned by this function calls the pseudo-constructor in its
-     * own context at some point.
-     *
-     * It is invoked with 2 or more arguments: 1 mutable object for sharing
-     * protected members between parents and children; 1 object containg
-     * `private`, `protected` and `public` static members by those keys; and
-     * finally any arguments that were passed to the real constructor.
-     *
-     * The body of the constructor should be used to define private, protected,
-     * and public members.
-     * @param {Object} parameters.prototype Property descriptors to be applied
-     * to the class's prototype. (Public methods.)
-     * @param {Object} parameters.private Property descriptors for an immutable
-     * object available only to this class. (Private static members.)
-     * @param {Object} parameters.protected Property descriptors for an
-     * immutable object available only to this class whose properties are an
-     * accumulation of protected properties of parents and the class itself,
-     * with childrens' properties overriding parents'. (Protected static members.)
-     * @param {Object} parameters.public Property descriptors to be applied
-     * directly to the returned constructor. (Public static members.)
-     * @returns {Class} Constructor for the class.
-     */
-    snowman = function (parameters) {
-        var Parent, parentPrototype, parentApply, pseudoConstructor,
-            privateStatic, protectedStatic, protectedStaticPropertyDescriptors,
-            Class, classPrototype;
+            // Makes `sender` appear to be the recipient of assigned properties,
+            // when they are actually delegating to the `receiver` set by
+            // `getDelegators`.
+            setDelegators = function (sender, delegators) {
+                defineProperties(sender, delegators);
+            },
 
-        parameters = parameters || {};
+            // Exclusive object reference that determines a constructor's
+            // invocation context. If a constructor is called as a result of
+            // parasitic inheritance, this object will be prepended to the
+            // constructor's arguments, and the constructor will return
+            // protected and public members; otherwise, it will just return
+            // public members.
+            INHERITING = {},
 
-        Parent = parameters.extends || Object;
-        parentPrototype = Parent === null ? Parent : Parent.prototype;
+            snowman = function (options) {
 
-        // Stash references for performance.
-        parentApply = Function.prototype.apply
-            .bind(Parent || noop); // (`|| noop` for `null` prototypes.)
-        pseudoConstructor = parameters.constructor || noop;
+                var constructor = options.constructor,
+                    parent = options.extends,
+                    privateNames = options.private || empty,
+                    protectedNames = options.protected || empty,
+                    publicNames = options.public || empty;
 
-        privateStatic = {};
-        defineProperties(privateStatic, parameters.private || {});
-        freeze(privateStatic);
+                return function (inheritanceContext) {
 
-        // Will be populated once by the constructor after it has inherited
-        // parasitically from parents, then will be frozen.
-        protectedStatic = {};
-        protectedStaticPropertyDescriptors = parameters.protected || {};
+                    // Validation. See `INHERITING`.
+                    var isInheriting = inheritanceContext === INHERITING,
 
-        /**
-         * @private
-         * @constructor
-         * @param {*} ...args Arbitrary arguments to pass along to the
-         * pseudoConstructor.
-         * @param {Object} $protected Mutable protected members.
-         * @param {Object} privateStatic Private static members.
-         * @param {Object} protectedStatic Protected static members.
-         * @param {Class} publicStatic Reference to this constructor. Public
-         * static members are own properties of the constructor.
-         * @param {Inheritance} inheritance Inheritance data private to this
-         * implementation.
-         */
-        Class = function Class() {
-            var argumentsArray = slice(arguments),
-                argumentsLength = arguments.length,
+                        // Validation criteria plus developer-supplied
+                        // arguments.
+                        parentArguments,
 
-                inheritanceArg = arguments[argumentsLength - 1],
-                // publicStaticArg = arguments[argumentsLength - 2],
-                protectedStaticArg = arguments[argumentsLength - 3],
-                // privateStaticArg = arguments[argumentsLength - 4],
-                protectedArg = arguments[argumentsLength - 5],
+                        // Destructuring assignment enabler.
+                        vessel,
 
-                isInheriting = inheritanceArg instanceof Inheritance,
-                localProtectedStatic = isInheriting ? protectedStaticArg : protectedStatic,
-                restLeft = isInheriting ? argumentsArray.slice(0, argumentsLength - 5) : argumentsArray,
-                $protected = isInheriting ? protectedArg : {},
-                inheritance = isInheriting ? inheritanceArg : new Inheritance(),
+                        // `ProtectedThat` of the parent. Used for inheritance.
+                        parentProtectedThat,
 
-                // Private implementation API.
-                constructorArguments = isInheriting ? argumentsArray : restLeft.concat(
-                    $protected,
-                    privateStatic,
-                    localProtectedStatic,
-                    Class, // publicStatic
-                    inheritance
-                ),
+                        // `privateThat`, minus private properties. See
+                        // `privateThat`.
+                        protectedThat,
 
-                // User-facing API.
-                pseudoConstructorArguments = [
-                    $protected,
-                    freeze({
-                        private: privateStatic,
-                        protected: protectedStatic,
-                        public: Class
-                    })
-                ].concat(restLeft),
+                        // Containers of the parent. Used for inheritance. See
+                        // `container`.
+                        parentPublicContainer,
+                        parentProtectedContainer,
 
-                // Loop boilerplate.
-                queue,
-                queueLength,
-                queueIndex;
+                        // Containers to separate public, protected and private
+                        // variables so that privates can be discarded,
+                        // publics/protecteds can be inherited and/or
+                        // overridden, and finally publics can be returned by
+                        // the constructor.
+                        publicContainer,
+                        protectedContainer,
+                        privateContainer,
 
-            // Super.
-            parentApply(this, constructorArguments);
+                        // Serves as `this` within the constructor and
+                        // methods. Public, protected and private properties are
+                        // all settable and gettable on this object. For
+                        // inheritance purposes, anything set is secretly
+                        // delegated to corresponding properties on `container`.
+                        privateThat,
 
-            if (!isFrozen(localProtectedStatic)) {
-                // The call stack will unwind such that children augment the
-                // object and override parents' configurable properties.
-                defineProperties(localProtectedStatic, protectedStaticPropertyDescriptors);
+                        // Property descriptors delegating the setting and
+                        // getting of properties to other objects. See
+                        // `getDelegators`.
+                        publicDelegators,
+                        protectedDelegators,
+                        privateDelegators,
 
-                // Continue until the most-derived child is reached. Then become
-                // immutable.
-                if (!isInheriting) {
-                    freeze(localProtectedStatic);
-                }
-            }
+                        // Only developer-supplied arguments.
+                        constructorArguments;
 
-            queue = inheritance.pseudoConstructorExecutorQueue;
-            // Pseudo-constructor, always invoked with `$protected`, `$static` and `...restLeft`.
-            queue.push(Function.prototype.apply.bind(pseudoConstructor, this, pseudoConstructorArguments));
+                    if (parent) {
 
-            if (!isInheriting) {
-                // Instantiate.
-                queueLength = queue.length;
-                queueIndex = 0;
-                while (queueIndex < queueLength) {
-                    queue[queueIndex]();
-                    queueIndex += 1;
-                }
-                // Become immutable.
-                freeze(this);
-            }
-        };
+                        // Pass arguments to the parent in such a way as to
+                        // indicate an "inheriting" context.
+                        parentArguments = [INHERITING].concat(slice(arguments));
 
-        // Inherit prototypically.
-        Class.prototype = create(parentPrototype);
-        classPrototype = Class.prototype;
+                        // Destructuringly assign the 3 values returned from the
+                        // parent.
+                        vessel = parent.apply(null, parentArguments);
+                        parentProtectedThat = vessel[0];
+                        parentPublicContainer = vessel[1];
+                        parentProtectedContainer = vessel[2];
 
-        // Restore `constructor` explicitly as an own property
-        // (assigning would cause a TypeError because it'd find a frozen
-        // property on the prototype chain).
-        defineProperty(classPrototype, 'constructor', {
-            value: Class
-        });
+                        // Inherit the parent's public and protected properties.
+                        // Using `Object.create` in all the below cases enables
+                        // `Object.getPrototypeOf` as a "super" mechanism.
+                        protectedThat = create(parentProtectedThat);
+                        privateThat = create(parentProtectedThat);
+                        publicContainer = create(parentPublicContainer);
+                        protectedContainer = create(parentProtectedContainer);
 
-        // Define public members.
-        defineProperties(classPrototype, parameters.prototype || {});
-        freeze(classPrototype);
+                    } else {
 
-        // Define public static members.
-        defineProperties(Class, parameters.public || {});
-        freeze(Class);
+                        // Lower base case.
+                        protectedThat = {};
+                        privateThat = {};
+                        publicContainer = {};
+                        protectedContainer = {};
 
-        return Class;
-    };
+                    }
 
-    return snowman;
+                    // The private container is always local to only this
+                    // constructor.
+                    privateContainer = {};
 
-}));
+                    // Delegate properties from thats to containers.
+                    publicDelegators = getDelegators(publicContainer, publicNames);
+                    protectedDelegators = getDelegators(protectedContainer, protectedNames);
+                    privateDelegators = getDelegators(privateContainer, privateNames);
+
+                    // Give the protected version limited access.
+                    setDelegators(protectedThat, publicDelegators);
+                    setDelegators(protectedThat, protectedDelegators);
+
+                    // Give the private version full access.
+                    setDelegators(privateThat, publicDelegators);
+                    setDelegators(privateThat, protectedDelegators);
+                    setDelegators(privateThat, privateDelegators);
+
+                    // Make immutable.
+                    freeze(protectedThat);
+                    freeze(privateThat);
+
+                    if (isInheriting) {
+                        // Don't pass `INHERITING` to the constructor.
+                        constructorArguments = slice(arguments, 1);
+                    } else {
+                        constructorArguments = arguments;
+                    }
+
+                    // Invoke the constructor with `this` set to the delegator.
+                    constructor.apply(privateThat, constructorArguments);
+
+                    // Use recursion to accomplish inheritance.
+                    if (isInheriting) {
+                        // Make shared data available to inheritors.
+                        return [protectedThat,
+                                publicContainer,
+                                protectedContainer];
+                    }
+
+                    // Upper base case.
+                    return freeze(publicContainer);
+                };
+            };
+
+        return snowman;
+    }));
+
+}(this));
