@@ -28,6 +28,9 @@
 
     'use strict';
 
+    /**
+     * @module {Function} snowman
+     */
     (function (factory) {
         if (typeof define === 'function' && define.amd) {
             define([], factory);
@@ -115,6 +118,69 @@
             // public members.
             INHERITING = {},
 
+            /**
+             * Creates factory functions for objects with the following
+             * features:
+             *
+             * - Constant private, protected and public members
+             * - Private, protected and public static members
+             * - "Super" via `Object.getPrototypeOf`
+             * - Totally immutable objects via `Object.freeze`
+             *
+             * Factory functions perform parasitic inheritance using a host
+             * defined by `options.extends`. Internals are frozen at each step
+             * to ensure total immutability.
+             *
+             * @function snowman
+             * @param {Object} options Container for arguments.
+             * @param {Function} options.extends Snowman-generated factory of
+             * the parent to extend. If ommitted, the object inherits from
+             * `Object.prototype`.
+             * @param {Function} options.constructor Pseudo-constructor
+             * containing all the logic a constructor function (such as one
+             * called with `new`) normally would have. The constructor should
+             * define local private, protected, and public members. The factory
+             * returned by the `snowman` function calls the pseudo-constructor
+             * the factoried object's own context; thus, within the constructor,
+             * `this` reveals both local and static private, protected and
+             * public properties of the factoried object and its
+             * parents. Calling `Object.getPrototypeOf` on `this` reveals the
+             * parent's local and static protected and public properties. `this`
+             * is unconfigurable, unenumerable and unwritable (though there are
+             * property setters for properties defined in `options.local` which
+             * appear writable).
+             * @param {Object} options.static Container for static
+             * properties. "Static" in this context just means that the value is
+             * predefined and assumed to be immutable, thus it is reused for all
+             * instances. Ideal for methods and CONSTANTS. By convention, and to
+             * preserve the `this` namespace, CONSTANTS should be written in
+             * ALL_CAPS.
+             * @param {Object} options.static.private Map of property names to
+             * values. Values are exposed to `this` within the context of the
+             * constructor and the object's methods only.
+             * @param {Object} options.static.protected Map of property names to
+             * values. Values are exposed to `this` and children.
+             * @param {Object} options.static.public Map of property names to
+             * values. Values are exposed to `this`, children and as properties
+             * on the object returned by the factory.
+             * @param {Object} options.static.factory Map of property names to
+             * values. Values are exposed on the returned factory.
+             * @param {Object} options.local Container for
+             * instance properties. All property names specified are
+             * uninitialized and are expected to be assigned-to in the
+             * constructor. Additionally, they are all constant, so they can
+             * only be assigned-to once, otherwise an error will be thrown.
+             * @param {Array.<String>} options.local.private Array of property
+             * names. Values are exposed to `this` within the context of the
+             * constructor and the object's methods only.
+             * @param {Array.<String>} options.local.protected Array of property
+             * names. Values are exposed to `this` and children.
+             * @param {Array.<String>} options.local.public Array of property
+             * names. Values are exposed to `this`, children and as properties
+             * on the object returned by the factory.
+             * @returns {Function} Factory for the defined object, and host
+             * factory for parasitic inheritors.
+             */
             snowman = function (options) {
 
                 options = options || {};
@@ -154,7 +220,7 @@
                             // Destructuring assignment enabler.
                             vessel,
 
-                            // `ProtectedThat` of the parent. Used for
+                            // `protectedThat` of the parent. Used for
                             // inheritance.
                             parentProtectedThat,
 
@@ -163,7 +229,7 @@
                             protectedThat,
 
                             // Containers of the parent. Used for
-                            // inheritance. See `container`.
+                            // inheritance. See the containers below.
                             parentPublicContainer,
                             parentProtectedContainer,
 
@@ -181,7 +247,7 @@
                             // are all settable and gettable on this object. For
                             // inheritance purposes, anything set is secretly
                             // delegated to corresponding properties on
-                            // `container`.
+                            // the containers above.
                             privateThat,
 
                             // Property descriptors delegating the setting and
@@ -237,15 +303,15 @@
                         // constructor.
                         privateContainer = {};
 
-                        // Delegate properties from thats to containers.
-                        publicDelegators = getDelegators(publicContainer, publicLocals);
-                        protectedDelegators = getDelegators(protectedContainer, protectedLocals);
-                        privateDelegators = getDelegators(privateContainer, privateLocals);
-
                         // Bind methods to that.
                         boundPublicStatics = getBoundDescriptors(privateThat, publicStatics);
                         boundProtectedStatics = getBoundDescriptors(privateThat, protectedStatics);
                         boundPrivateStatics = getBoundDescriptors(privateThat, privateStatics);
+
+                        // Delegate properties from thats to containers.
+                        publicDelegators = getDelegators(publicContainer, publicLocals);
+                        protectedDelegators = getDelegators(protectedContainer, protectedLocals);
+                        privateDelegators = getDelegators(privateContainer, privateLocals);
 
                         // Expose public static properties.
                         defineProperties(publicContainer, boundPublicStatics);
@@ -287,10 +353,12 @@
                                     protectedContainer];
                         }
 
+                        // Upper base case.
+
                         // Make immutable.
                         freeze(publicContainer);
 
-                        // Upper base case. Expose only the public API.
+                        // Expose only the public API.
                         return publicContainer;
                     };
 
