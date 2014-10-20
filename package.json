@@ -1,8 +1,8 @@
 {
   "name": "snowman",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Immutable, inheritable objects with information hiding.",
-  "main": "src/snowman.js",
+  "main": "snowman.js",
   "scripts": {
     "test": "grunt test"
   },

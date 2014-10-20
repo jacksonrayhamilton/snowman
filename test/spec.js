@@ -4,7 +4,7 @@
 'use strict';
 
 var assert = require('assert'),
-    snowman = require('../src/snowman');
+    snowman = require('../snowman');
 
 describe('exposure', function () {
 

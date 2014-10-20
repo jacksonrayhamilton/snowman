@@ -15,13 +15,13 @@ module.exports = function (grunt) {
 
         jslint: {
             all: {
-                src: ['src/*.js']
+                src: 'snowman.js'
             }
         },
 
         mochaTest: {
             test: {
-                src: ['test/*.js']
+                src: 'test/*.js'
             }
         },
 
@@ -32,7 +32,7 @@ module.exports = function (grunt) {
                     sourceMap: true
                 },
                 files: {
-                    'dist/snowman.min.js': 'src/snowman.js'
+                    'dist/snowman.min.js': 'snowman.js'
                 }
             }
         },
@@ -40,7 +40,7 @@ module.exports = function (grunt) {
         watch: {
             test: {
                 files: [
-                    'src/*.js',
+                    'snowman.js',
                     'test/*.js'
                 ],
                 tasks: 'test'
