@@ -28,9 +28,6 @@
 
     'use strict';
 
-    /**
-     * @module {Function} snowman
-     */
     (function (factory) {
         if (typeof define === 'function' && define.amd) {
             define([], factory);
@@ -122,47 +119,52 @@
              * Creates factory functions for objects with the following
              * features:
              *
-             * - Constant private, protected and public members
-             * - Private, protected and public static members
-             * - "Super" via `Object.getPrototypeOf`
-             * - Totally immutable objects via `Object.freeze`
+             * <ul>
+             *     <li>Constant private, protected and public members</li>
+             *     <li>Private, protected and public static members</li>
+             *     <li>"Super" via <code>Object.getPrototypeOf</code></li>
+             *     <li>Totally immutable objects via <code>Object.freeze</code></li>
+             * </ul>
              *
              * Factory functions perform parasitic inheritance using a host
-             * defined by `options.extends`. Internals are frozen at each step
-             * to ensure total immutability.
+             * defined by <code>options.extends</code>. Internals are frozen at
+             * each step to ensure total immutability.
              *
+             * @exports snowman
              * @function snowman
              * @param {Object} options Container for arguments.
              * @param {Function} options.extends Snowman-generated factory of
              * the parent to extend. If ommitted, the object inherits from
-             * `Object.prototype`.
-             * @param {Function} options.constructor Pseudo-constructor
-             * containing all the logic a constructor function (such as one
-             * called with `new`) normally would have. The constructor should
+             * <code>Object.prototype</code>.
+             * @param {Function} options.constructor Constructor containing all
+             * the logic a constructor function (such as one called with
+             * <code>new</code>) normally would have. The constructor should
              * define local private, protected, and public members. The factory
-             * returned by the `snowman` function calls the pseudo-constructor
-             * the factoried object's own context; thus, within the constructor,
-             * `this` reveals both local and static private, protected and
-             * public properties of the factoried object and its
-             * parents. Calling `Object.getPrototypeOf` on `this` reveals the
-             * parent's local and static protected and public properties. `this`
-             * is unconfigurable, unenumerable and unwritable (though there are
-             * property setters for properties defined in `options.local` which
-             * appear writable).
+             * returned by the <code>snowman</code> function calls the
+             * constructor in the constructed object's own context; thus, within
+             * the constructor, <code>this</code> reveals both local and static
+             * private, protected and public properties of the constructed
+             * object and its parents. Calling
+             * <code>Object.getPrototypeOf</code> on <code>this</code> reveals
+             * the parent's local and static protected and public
+             * properties. <code>this</code> is unconfigurable, unenumerable and
+             * unwritable (though there are setters for properties defined in
+             * <code>options.local</code> which make those properties appear
+             * writable).
              * @param {Object} options.static Container for static
              * properties. "Static" in this context just means that the value is
              * predefined and assumed to be immutable, thus it is reused for all
              * instances. Ideal for methods and CONSTANTS. By convention, and to
-             * preserve the `this` namespace, CONSTANTS should be written in
-             * ALL_CAPS.
+             * preserve the <code>this</code> namespace, CONSTANTS should be
+             * written in ALL_CAPS.
              * @param {Object} options.static.private Map of property names to
-             * values. Values are exposed to `this` within the context of the
-             * constructor and the object's methods only.
+             * values. Values are exposed to <code>this</code> within the
+             * context of the constructor and the object's methods only.
              * @param {Object} options.static.protected Map of property names to
-             * values. Values are exposed to `this` and children.
+             * values. Values are exposed to <code>this</code> and children.
              * @param {Object} options.static.public Map of property names to
-             * values. Values are exposed to `this`, children and as properties
-             * on the object returned by the factory.
+             * values. Values are exposed to <code>this</code>, children and as
+             * properties on the object returned by the factory.
              * @param {Object} options.static.factory Map of property names to
              * values. Values are exposed on the returned factory.
              * @param {Object} options.local Container for
@@ -171,15 +173,15 @@
              * constructor. Additionally, they are all constant, so they can
              * only be assigned-to once, otherwise an error will be thrown.
              * @param {Array.<String>} options.local.private Array of property
-             * names. Values are exposed to `this` within the context of the
-             * constructor and the object's methods only.
+             * names. Values are exposed to <code>this</code> within the context
+             * of the constructor and the object's methods only.
              * @param {Array.<String>} options.local.protected Array of property
-             * names. Values are exposed to `this` and children.
+             * names. Values are exposed to <code>this</code> and children.
              * @param {Array.<String>} options.local.public Array of property
-             * names. Values are exposed to `this`, children and as properties
-             * on the object returned by the factory.
-             * @returns {Function} Factory for the defined object, and host
-             * factory for parasitic inheritors.
+             * names. Values are exposed to <code>this</code>, children and as
+             * properties on the object returned by the factory.
+             * @returns {Function} Factory for the defined object, which doubles
+             * as a host factory for parasitic inheritors.
              */
             snowman = function (options) {
 
