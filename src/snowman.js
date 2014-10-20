@@ -105,6 +105,24 @@
                 return map;
             },
 
+            getBoundDescriptors = function (that, descriptors) {
+                var map = {},
+                    index = 0,
+                    names = keys(descriptors),
+                    length = names.length,
+                    name,
+                    value;
+                while (index < length) {
+                    name = names[index];
+                    value = descriptors[name].value;
+                    map[name] = {
+                        value: typeof value === 'function' ? value.bind(that) : value
+                    };
+                    index += 1;
+                }
+                return map;
+            },
+
             // Exclusive object reference that determines a constructor's
             // invocation context. If a constructor is called as a result of
             // parasitic inheritance, this object will be prepended to the
@@ -186,6 +204,11 @@
                             protectedDelegators,
                             privateDelegators,
 
+                            // Public static methods must be bound to
+                            // `privateThat` because they may otherwise possibly
+                            // be executed in an alternative context.
+                            boundPublicStatics,
+
                             // Only developer-supplied arguments.
                             constructorArguments;
 
@@ -231,7 +254,8 @@
                         privateDelegators = getDelegators(privateContainer, privateLocals);
 
                         // Expose public static properties.
-                        defineProperties(publicContainer, publicStatics);
+                        boundPublicStatics = getBoundDescriptors(privateThat, publicStatics);
+                        defineProperties(publicContainer, boundPublicStatics);
 
                         // Give the protected version limited access.
                         defineProperties(protectedThat, publicStatics);
