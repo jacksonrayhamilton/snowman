@@ -74,7 +74,7 @@ describe('exposure', function () {
 
 describe('super', function () {
 
-    it('should expose inherited properties via Object.getPrototypeOf', function () {
+    it('should expose inherited properties via `Object.getPrototypeOf`', function () {
 
         var a = snowman({
             protected: ['a'],
@@ -133,6 +133,93 @@ describe('super', function () {
         b();
         c();
         d();
+
+    });
+
+});
+
+describe('statics', function () {
+
+    it('should predefine static properties', function () {
+
+        var lastAofA,
+            lastAofB,
+            a = snowman({
+                private: [{
+                    a: {}
+                }],
+                constructor: function () {
+                    assert(typeof this.a === 'object');
+                    if (lastAofA) {
+                        assert.strictEqual(this.a, lastAofA, 'Static properties are the same object.');
+                    }
+                    lastAofA = this.a;
+                }
+            }),
+            b = snowman({
+                extends: a,
+                private: [{
+                    a: function () {
+                        return;
+                    }
+                }],
+                constructor: function () {
+                    assert(typeof this.a === 'function');
+                    if (lastAofB) {
+                        assert.strictEqual(this.a, lastAofB, 'Static properties are the same object.');
+                    }
+                    lastAofB = this.a;
+                }
+            });
+
+        // Test each twice so `lastAofX` can be validated.
+        a();
+        a();
+        b();
+        b();
+
+    });
+
+});
+
+describe('methods', function () {
+
+    it('should reveal properties via `this` in methods', function () {
+
+        var a = snowman({
+            private: [{
+                d: function () {
+                    assert.strictEqual(this.a, 0);
+                }
+            }, 'a'],
+            protected: ['b'],
+            public: ['c'],
+            constructor: function () {
+                this.a = 0;
+                this.b = 1;
+                this.c = 2;
+                this.d();
+            }
+        }),
+            b = snowman({
+                extends: a,
+                private: [{
+                    d: function () {
+                        assert.strictEqual(this.a, 3);
+                    }
+                }, 'a'],
+                protected: ['b'],
+                public: ['c'],
+                constructor: function () {
+                    this.a = 3;
+                    this.b = 4;
+                    this.c = 5;
+                    this.d();
+                }
+            });
+
+        a();
+        b();
 
     });
 

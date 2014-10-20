@@ -43,33 +43,46 @@
             defineProperties = Object.defineProperties,
             freeze = Object.freeze,
             hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
+            keys = Object.keys,
             slice = Function.prototype.call.bind(Array.prototype.slice),
 
             // Noop array.
             empty = [],
+
+            getDelegator = function (receiver, name, isInitiallySet) {
+                var isSet = isInitiallySet;
+                return {
+                    set: function (value) {
+                        if (isSet) {
+                            throw new TypeError('Cannot reassign property `' + name + '\'.');
+                        }
+                        receiver[name] = value;
+                        isSet = true;
+                    },
+                    get: function () {
+                        // Don't dredge properties out of the prototype.
+                        if (hasOwnProperty(receiver, name)) {
+                            return receiver[name];
+                        }
+                        return undefined;
+                    }
+                };
+            },
 
             // Gets property descriptors describing properties which delegate
             // their values to `receiver`.
             getDelegators = function (receiver, names) {
                 var map = {};
                 names.forEach(function (name) {
-                    var set = false;
-                    map[name] = {
-                        set: function (value) {
-                            if (set) {
-                                throw new TypeError('Cannot reassign property `' + name + '\'.');
-                            }
-                            receiver[name] = value;
-                            set = true;
-                        },
-                        get: function () {
-                            // Don't dredge properties out of the prototype.
-                            if (hasOwnProperty(receiver, name)) {
-                                return receiver[name];
-                            }
-                            return undefined;
-                        }
-                    };
+                    var object = name;
+                    if (typeof name === 'object') {
+                        keys(name).forEach(function (name) {
+                            receiver[name] = object[name];
+                            map[name] = getDelegator(receiver, name, true);
+                        });
+                    } else {
+                        map[name] = getDelegator(receiver, name, false);
+                    }
                 });
                 return map;
             },
