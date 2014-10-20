@@ -64,7 +64,7 @@ var snowman = require('snowman'),
 ## Examples
 
 ```js
-(function () {
+(function (snowman) {
 
     'use strict';
 
@@ -152,7 +152,7 @@ var snowman = require('snowman'),
 
     bobby.consultOnAge(); // I'm 44.
 
-}());
+}(window.snowman));
 ```
 
 For more examples, see `test/`.
