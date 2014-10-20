@@ -42,29 +42,33 @@
         var create = Object.create,
             defineProperties = Object.defineProperties,
             freeze = Object.freeze,
-            hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
             keys = Object.keys,
             slice = Function.prototype.call.bind(Array.prototype.slice),
 
-            // Noop array.
-            empty = [],
+            noopObject = {},
+            noopArray = [],
+            noopFunction = function () {
+                return;
+            },
 
-            getDelegator = function (receiver, name, isInitiallySet) {
-                var isSet = isInitiallySet;
+            // Gets a property descriptor for `name` which delegates its value
+            // to `receiver`.
+            getDelegator = function (receiver, name) {
+                var isSet = false,
+                    cache; // Store the set value here so what would otherwise
+                           // be a hasOwnProperty check on the receiver is not
+                           // necessary.
                 return {
                     set: function (value) {
                         if (isSet) {
                             throw new TypeError('Cannot reassign property ' + name + '.');
                         }
+                        cache = value;
                         receiver[name] = value;
                         isSet = true;
                     },
                     get: function () {
-                        // Don't dredge properties out of the prototype.
-                        if (hasOwnProperty(receiver, name)) {
-                            return receiver[name];
-                        }
-                        return undefined;
+                        return cache;
                     }
                 };
             },
@@ -72,27 +76,33 @@
             // Gets property descriptors for `names` which delegate their values
             // to `receiver`.
             getDelegators = function (receiver, names) {
-                return names.reduce(function (map, name) {
-                    map[name] = getDelegator(receiver, name, false);
-                    return map;
-                }, {});
+                var map = {},
+                    index = 0,
+                    length = names.length,
+                    name;
+                while (index < length) {
+                    name = names[index];
+                    map[name] = getDelegator(receiver, name);
+                    index += 1;
+                }
+                return map;
             },
 
-            // Static delegators are pre-set and supplied in key-value
-            // form. This alternative form of `setDelegators` creates them.
-            getStaticDelegators = function (receiver, names) {
-                return keys(names).reduce(function (map, name) {
-                    receiver[name] = names[name];
-                    map[name] = getDelegator(receiver, name, true);
-                    return map;
-                }, {});
-            },
-
-            // Makes `sender` appear to be the recipient of assigned properties,
-            // when they are actually delegating to the `receiver` set by
-            // `getDelegators`.
-            setDelegators = function (sender, delegators) {
-                defineProperties(sender, delegators);
+            // Gets property descriptors for static values.
+            getStatics = function (object) {
+                var map = {},
+                    index = 0,
+                    names = keys(object),
+                    length = names.length,
+                    name;
+                while (index < length) {
+                    name = names[index];
+                    map[name] = {
+                        value: object[name]
+                    };
+                    index += 1;
+                }
+                return map;
             },
 
             // Exclusive object reference that determines a constructor's
@@ -105,23 +115,27 @@
 
             snowman = function (options) {
 
-                var constructor = options.constructor,
+                var constructor = options.constructor || noopFunction,
+                    constructorApply = Function.prototype.apply.bind(constructor),
+
                     hasParent = options.extends !== undefined,
                     parent = options.extends,
-                    privateNames = options.private || empty,
-                    protectedNames = options.protected || empty,
-                    publicNames = options.public || empty,
+                    parentApply = Function.prototype.apply.bind(parent, null),
+
+                    privateNames = options.private || noopArray,
+                    protectedNames = options.protected || noopArray,
+                    publicNames = options.public || noopArray,
 
                     // Scope static delegators outside the factory so that all
                     // instances will share the same ones.
-                    privateStaticDelegators = getStaticDelegators({}, options.privateStatic || {}),
-                    protectedStaticDelegators = getStaticDelegators({}, options.protectedStatic || {}),
-                    publicStaticDelegators = getStaticDelegators({}, options.publicStatic || {}),
+                    privateStatics = getStatics(options.privateStatic || noopObject),
+                    protectedStatics = getStatics(options.protectedStatic || noopObject),
+                    publicStatics = getStatics(options.publicStatic || noopObject),
 
-                    factory = function (inheritanceContext) {
+                    factory = function (inheriting) {
 
                         // Validation. See `INHERITING`.
-                        var isInheriting = inheritanceContext === INHERITING,
+                        var isInheriting = inheriting === INHERITING,
 
                             // Validation criteria plus developer-supplied
                             // arguments.
@@ -178,7 +192,7 @@
 
                             // Destructuringly assign the 3 values returned from
                             // the parent.
-                            vessel = parent.apply(null, parentArguments);
+                            vessel = parentApply(parentArguments);
                             parentProtectedThat = vessel[0];
                             parentPublicContainer = vessel[1];
                             parentProtectedContainer = vessel[2];
@@ -212,16 +226,16 @@
                         privateDelegators = getDelegators(privateContainer, privateNames);
 
                         // Give the protected version limited access.
-                        setDelegators(protectedThat, protectedStaticDelegators);
-                        setDelegators(protectedThat, publicDelegators);
-                        setDelegators(protectedThat, protectedDelegators);
+                        defineProperties(protectedThat, protectedStatics);
+                        defineProperties(protectedThat, publicDelegators);
+                        defineProperties(protectedThat, protectedDelegators);
 
                         // Give the private version full access.
-                        setDelegators(privateThat, protectedStaticDelegators);
-                        setDelegators(privateThat, privateStaticDelegators);
-                        setDelegators(privateThat, publicDelegators);
-                        setDelegators(privateThat, protectedDelegators);
-                        setDelegators(privateThat, privateDelegators);
+                        defineProperties(privateThat, protectedStatics);
+                        defineProperties(privateThat, privateStatics);
+                        defineProperties(privateThat, publicDelegators);
+                        defineProperties(privateThat, protectedDelegators);
+                        defineProperties(privateThat, privateDelegators);
 
                         // Make immutable.
                         freeze(protectedThat);
@@ -235,8 +249,8 @@
                         }
 
                         // Invoke the constructor with `this` set to the
-                        // delegator.
-                        constructor.apply(privateThat, constructorArguments);
+                        // delegating that.
+                        constructorApply(privateThat, constructorArguments);
 
                         // Use recursion to accomplish inheritance.
                         if (isInheriting) {
@@ -247,11 +261,13 @@
                         }
 
                         // Upper base case.
-                        return freeze(publicContainer);
+                        freeze(publicContainer);
+                        // Expose the public API only.
+                        return publicContainer;
                     };
 
                 // Assign public statics to the factory.
-                setDelegators(factory, publicStaticDelegators);
+                defineProperties(factory, publicStatics);
 
                 // Make immutable.
                 freeze(factory);
