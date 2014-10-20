@@ -271,8 +271,6 @@ describe('methods', function () {
                 },
                 protected: {
                     B: function () {
-                        // An instance of b would not have the private property
-                        // `a`.
                         assert.strictEqual(this.a, 0);
                         assert.strictEqual(this.b, 1);
                         assert.strictEqual(this.c, 2);

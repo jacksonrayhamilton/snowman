@@ -155,7 +155,7 @@ var snowman = require('snowman'),
 }());
 ```
 
-For more examples, see `tests/`.
+For more examples, see `test/`.
 
 ## Development
 
