@@ -253,6 +253,9 @@
                 // Assign public statics to the factory.
                 setDelegators(factory, publicStaticDelegators);
 
+                // Make immutable.
+                freeze(factory);
+
                 return factory;
             };
 
