@@ -1,0 +1,23 @@
+{
+  "name": "snowman",
+  "main": "snowman.js",
+  "version": "0.0.3",
+  "homepage": "https://github.com/jacksonrayhamilton/snowman",
+  "authors": [
+    "Jackson Ray Hamilton <jackson@jacksonrayhamilton.com>"
+  ],
+  "description": "Immutable, inheritable objects with information hiding.",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
