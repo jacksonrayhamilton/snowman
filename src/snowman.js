@@ -88,23 +88,7 @@
                 return map;
             },
 
-            // Gets property descriptors for static values.
-            getStatics = function (object) {
-                var map = {},
-                    index = 0,
-                    names = keys(object),
-                    length = names.length,
-                    name;
-                while (index < length) {
-                    name = names[index];
-                    map[name] = {
-                        value: object[name]
-                    };
-                    index += 1;
-                }
-                return map;
-            },
-
+            // Gets (bounded) property descriptors for static values.
             getBoundDescriptors = function (that, descriptors) {
                 var map = {},
                     index = 0,
@@ -114,7 +98,7 @@
                     value;
                 while (index < length) {
                     name = names[index];
-                    value = descriptors[name].value;
+                    value = descriptors[name];
                     map[name] = {
                         value: typeof value === 'function' ? value.bind(that) : value
                     };
@@ -150,10 +134,13 @@
 
                     // Scope static delegators outside the factory so that all
                     // instances will share the same ones.
-                    privateStatics = getStatics(options.static.private || noopObject),
-                    protectedStatics = getStatics(options.static.protected || noopObject),
-                    publicStatics = getStatics(options.static.public || noopObject),
-                    factoryStatics = getStatics(options.static.factory || noopObject),
+                    privateStatics = options.static.private || noopObject,
+                    protectedStatics = options.static.protected || noopObject,
+                    publicStatics = options.static.public || noopObject,
+                    factoryStatics = options.static.factory || noopObject,
+
+                    // Factory statics bound to... unsuprisingly, the factory.
+                    boundFactoryStatics,
 
                     factory = function (inheriting) {
 
@@ -208,6 +195,8 @@
                             // `privateThat` because they may otherwise possibly
                             // be executed in an alternative context.
                             boundPublicStatics,
+                            boundProtectedStatics,
+                            boundPrivateStatics,
 
                             // Only developer-supplied arguments.
                             constructorArguments;
@@ -253,20 +242,24 @@
                         protectedDelegators = getDelegators(protectedContainer, protectedLocals);
                         privateDelegators = getDelegators(privateContainer, privateLocals);
 
-                        // Expose public static properties.
+                        // Bind methods to that.
                         boundPublicStatics = getBoundDescriptors(privateThat, publicStatics);
+                        boundProtectedStatics = getBoundDescriptors(privateThat, protectedStatics);
+                        boundPrivateStatics = getBoundDescriptors(privateThat, privateStatics);
+
+                        // Expose public static properties.
                         defineProperties(publicContainer, boundPublicStatics);
 
                         // Give the protected version limited access.
-                        defineProperties(protectedThat, publicStatics);
-                        defineProperties(protectedThat, protectedStatics);
+                        defineProperties(protectedThat, boundPublicStatics);
+                        defineProperties(protectedThat, boundProtectedStatics);
                         defineProperties(protectedThat, publicDelegators);
                         defineProperties(protectedThat, protectedDelegators);
 
                         // Give the private version full access.
-                        defineProperties(privateThat, publicStatics);
-                        defineProperties(privateThat, protectedStatics);
-                        defineProperties(privateThat, privateStatics);
+                        defineProperties(privateThat, boundPublicStatics);
+                        defineProperties(privateThat, boundProtectedStatics);
+                        defineProperties(privateThat, boundPrivateStatics);
                         defineProperties(privateThat, publicDelegators);
                         defineProperties(privateThat, protectedDelegators);
                         defineProperties(privateThat, privateDelegators);
@@ -302,7 +295,8 @@
                     };
 
                 // Assign factory statics to the factory.
-                defineProperties(factory, factoryStatics);
+                boundFactoryStatics = getBoundDescriptors(factory, factoryStatics);
+                defineProperties(factory, boundFactoryStatics);
 
                 // Make immutable.
                 freeze(factory);

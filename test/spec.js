@@ -234,30 +234,29 @@ describe('methods', function () {
                     }
                 },
                 protected: {
-                    B: function (callingFromA) {
+                    B: function () {
                         // An instance of b would not have the private property
                         // `a`.
-                        if (callingFromA) {
-                            assert.strictEqual(this.a, 0);
-                        }
+                        assert.strictEqual(this.a, 0);
                         assert.strictEqual(this.b, 1);
                         assert.strictEqual(this.c, 2);
                     }
                 },
                 public: {
-                    C: function (callingFromA) {
-                        if (callingFromA) {
-                            assert.strictEqual(this.a, 0);
-                        }
+                    C: function () {
+                        assert.strictEqual(this.a, 0);
                         assert.strictEqual(this.b, 1);
                         assert.strictEqual(this.c, 2);
+                    },
+                    D: function () {
+                        return 0;
                     }
                 },
                 factory: {
-                    D: function () {
-                        return this.E();
-                    },
                     E: function () {
+                        return this.F();
+                    },
+                    F: function () {
                         return 0;
                     }
                 }
@@ -272,25 +271,36 @@ describe('methods', function () {
                 this.b = 1;
                 this.c = 2;
                 this.A();
-                this.B(true);
-                this.C(true);
+                this.B();
+                this.C();
+                assert.strictEqual(this.D(), 0);
             }
         }),
             b = snowman({
                 extends: a,
+                static: {
+                    public: {
+                        D: function () {
+                            return 1;
+                        }
+                    }
+                },
                 constructor: function () {
                     assert.strictEqual(this.A, undefined);
                     this.B();
                     this.C();
+                    assert.strictEqual(this.D(), 1);
                 }
             }),
 
             aInstance = a(),
             bInstance = b();
 
-        aInstance.C(true);
+        aInstance.C();
         bInstance.C();
-        a.D();
+        assert.strictEqual(aInstance.D(), 0);
+        assert.strictEqual(bInstance.D(), 1);
+        a.E();
 
     });
 
