@@ -10,11 +10,11 @@ following features:
 - "Super" via `Object.getPrototypeOf`
 - Totally immutable objects via `Object.freeze`
 
-These features allow and data to be shared in an exclusive manner, without
-exposing it for modification, or even readability. Implementation details no
-longer leak, sparing projects from additional maintenance and
-documentation. Data is more secure, if not completely locked-away, from
-malicious 3rd-parties. No more `object._pinkyPromise`.
+These features allow data to be shared in an exclusive manner, without exposing
+it for modification or even readability. Implementation details no longer leak,
+sparing projects from additional maintenance and documentation. Data is more
+secure, if not completely locked-away, from malicious 3rd-parties. No more
+`object._pinkyPromise`.
 
 Let it snow, let it snow, let it snow... ❄
 
@@ -32,19 +32,23 @@ Browser:
 }(window.snowman));
 ```
 
-Node / CommonJS:
-
-```js
-var snowman = require('snowman'),
-    factory = snowman({});
-```
-
 AMD:
 
 ```js
 require(['snowman'], function (snowman) {
     var factory = snowman({});
 });
+```
+
+Node / CommonJS:
+
+```bash
+npm install snowman
+```
+
+```js
+var snowman = require('snowman'),
+    factory = snowman({});
 ```
 
 ## Examples
