@@ -1,6 +1,6 @@
 /*global define, exports, module */
 
-/*
+/**
  * @license The MIT License (MIT)
  *
  * Copyright (c) 2014 Jackson Ray Hamilton
