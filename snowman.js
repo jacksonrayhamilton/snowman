@@ -45,9 +45,9 @@
             keys = Object.keys,
             slice = Function.prototype.call.bind(Array.prototype.slice),
 
-            noopObject = {},
-            noopArray = [],
-            noopFunction = function () {
+            NOOP_OBJECT = {},
+            NOOP_ARRAY = [],
+            NOOP_FUNCTION = function () {
                 return;
             },
 
@@ -189,23 +189,23 @@
                 options.local = options.local || {};
                 options.static = options.static || {};
 
-                var constructor = options.constructor || noopFunction,
+                var constructor = options.constructor || NOOP_FUNCTION,
                     constructorApply = Function.prototype.apply.bind(constructor),
 
                     hasParent = options.extends !== undefined,
                     parent = options.extends,
                     parentApplyAsNull = Function.prototype.apply.bind(parent, null),
 
-                    privateLocals = options.local.private || noopArray,
-                    protectedLocals = options.local.protected || noopArray,
-                    publicLocals = options.local.public || noopArray,
+                    privateLocals = options.local.private || NOOP_ARRAY,
+                    protectedLocals = options.local.protected || NOOP_ARRAY,
+                    publicLocals = options.local.public || NOOP_ARRAY,
 
                     // Scope static delegators outside the factory so that all
                     // instances will share the same ones.
-                    privateStatics = options.static.private || noopObject,
-                    protectedStatics = options.static.protected || noopObject,
-                    publicStatics = options.static.public || noopObject,
-                    factoryStatics = options.static.factory || noopObject,
+                    privateStatics = options.static.private || NOOP_OBJECT,
+                    protectedStatics = options.static.protected || NOOP_OBJECT,
+                    publicStatics = options.static.public || NOOP_OBJECT,
+                    factoryStatics = options.static.factory || NOOP_OBJECT,
 
                     // Factory statics bound to... unsuprisingly, the factory.
                     boundFactoryStatics,
