@@ -142,40 +142,49 @@ describe('statics', function () {
 
     it('should predefine static properties', function () {
 
-        var lastAofA,
-            lastAofB,
-            a = snowman({
-                privateStatic: {
-                    a: {}
-                },
-                constructor: function () {
-                    assert(typeof this.a === 'object');
-                    if (lastAofA) {
-                        assert.strictEqual(this.a, lastAofA, 'Static properties are the same object.');
-                    }
-                    lastAofA = this.a;
-                }
-            }),
+        var a = snowman({
+            privateStatic: {
+                A: 0,
+                B: 1
+            },
+            protectedStatic: {
+                D: 2,
+                E: 3
+            },
+            publicStatic: {
+                G: 4,
+                H: 5
+            },
+            constructor: function () {
+                assert.strictEqual(this.A, 0);
+                assert.strictEqual(this.D, 2);
+                assert.strictEqual(this.G, undefined, 'Public static property is not on `this`.');
+            }
+        }),
             b = snowman({
                 extends: a,
                 privateStatic: {
-                    a: function () {
-                        return;
-                    }
+                    B: 6
+                },
+                protectedStatic: {
+                    E: 8
+                },
+                publicStatic: {
+                    H: 10
                 },
                 constructor: function () {
-                    assert(typeof this.a === 'function');
-                    if (lastAofB) {
-                        assert.strictEqual(this.a, lastAofB, 'Static properties are the same object.');
-                    }
-                    lastAofB = this.a;
+                    assert.strictEqual(this.A, undefined, 'Private property is not inherited.');
+                    assert.strictEqual(this.B, 6, 'Overriden.');
+                    assert.strictEqual(this.D, 2, 'Inherited.');
+                    assert.strictEqual(this.E, 8, 'Overriden.');
+                    assert.strictEqual(this.H, undefined, 'Public static property is not on `this`.');
                 }
             });
 
-        // Test each twice so `lastAofX` can be validated.
+        assert.strictEqual(a.G, 4);
+        assert.strictEqual(b.H, 10);
+
         a();
-        a();
-        b();
         b();
 
     });
@@ -187,9 +196,24 @@ describe('methods', function () {
     it('should reveal properties via `this` in methods', function () {
 
         var a = snowman({
-            privateStatic: {
-                d: function () {
+            protectedStatic: {
+                D: function () {
                     assert.strictEqual(this.a, 0);
+                    assert.strictEqual(this.b, 1);
+                    assert.strictEqual(this.c, 2);
+                },
+                // Will be called in the context of the child.
+                E: function () {
+                    assert.strictEqual(this.a, 3);
+                }
+            },
+            publicStatic: {
+                // Will be called in the context of the factory.
+                F: function () {
+                    return this.G();
+                },
+                G: function () {
+                    return 0;
                 }
             },
             private: ['a'],
@@ -199,13 +223,13 @@ describe('methods', function () {
                 this.a = 0;
                 this.b = 1;
                 this.c = 2;
-                this.d();
+                this.D();
             }
         }),
             b = snowman({
                 extends: a,
                 privateStatic: {
-                    d: function () {
+                    H: function () {
                         assert.strictEqual(this.a, 3);
                     }
                 },
@@ -216,12 +240,14 @@ describe('methods', function () {
                     this.a = 3;
                     this.b = 4;
                     this.c = 5;
-                    this.d();
+                    this.E();
+                    this.H();
                 }
             });
 
         a();
         b();
+        assert.strictEqual(a.F(), 0);
 
     });
 

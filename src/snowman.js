@@ -43,7 +43,6 @@
             defineProperties = Object.defineProperties,
             freeze = Object.freeze,
             hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
-            isArray = Array.isArray,
             keys = Object.keys,
             slice = Function.prototype.call.bind(Array.prototype.slice),
 
@@ -55,7 +54,7 @@
                 return {
                     set: function (value) {
                         if (isSet) {
-                            throw new TypeError('Cannot reassign property `' + name + '\'.');
+                            throw new TypeError('Cannot reassign property ' + name + '.');
                         }
                         receiver[name] = value;
                         isSet = true;
@@ -70,14 +69,23 @@
                 };
             },
 
-            // Gets property descriptors describing properties which delegate
-            // their values to `receiver`.
+            // Gets property descriptors for `names` which delegate their values
+            // to `receiver`.
             getDelegators = function (receiver, names) {
-                var map = {};
-                names.forEach(function (name) {
+                return names.reduce(function (map, name) {
                     map[name] = getDelegator(receiver, name, false);
-                });
-                return map;
+                    return map;
+                }, {});
+            },
+
+            // Static delegators are pre-set and supplied in key-value
+            // form. This alternative form of `setDelegators` creates them.
+            getStaticDelegators = function (receiver, names) {
+                return keys(names).reduce(function (map, name) {
+                    receiver[name] = names[name];
+                    map[name] = getDelegator(receiver, name, true);
+                    return map;
+                }, {});
             },
 
             // Makes `sender` appear to be the recipient of assigned properties,
@@ -95,18 +103,10 @@
             // public members.
             INHERITING = {},
 
-            getStaticDelegators = function (receiver, names) {
-                var map = {};
-                keys(names).forEach(function (name) {
-                    receiver[name] = names[name];
-                    map[name] = getDelegator(receiver, name, true);
-                });
-                return map;
-            },
-
             snowman = function (options) {
 
                 var constructor = options.constructor,
+                    hasParent = options.extends !== undefined,
                     parent = options.extends,
                     privateNames = options.private || empty,
                     protectedNames = options.protected || empty,
@@ -116,137 +116,144 @@
                     // instances will share the same ones.
                     privateStaticDelegators = getStaticDelegators({}, options.privateStatic || {}),
                     protectedStaticDelegators = getStaticDelegators({}, options.protectedStatic || {}),
-                    publicStaticDelegators = getStaticDelegators({}, options.publicStatic || {});
+                    publicStaticDelegators = getStaticDelegators({}, options.publicStatic || {}),
 
-                return function (inheritanceContext) {
+                    factory = function (inheritanceContext) {
 
-                    // Validation. See `INHERITING`.
-                    var isInheriting = inheritanceContext === INHERITING,
+                        // Validation. See `INHERITING`.
+                        var isInheriting = inheritanceContext === INHERITING,
 
-                        // Validation criteria plus developer-supplied
-                        // arguments.
-                        parentArguments,
+                            // Validation criteria plus developer-supplied
+                            // arguments.
+                            parentArguments,
 
-                        // Destructuring assignment enabler.
-                        vessel,
+                            // Destructuring assignment enabler.
+                            vessel,
 
-                        // `ProtectedThat` of the parent. Used for inheritance.
-                        parentProtectedThat,
+                            // `ProtectedThat` of the parent. Used for
+                            // inheritance.
+                            parentProtectedThat,
 
-                        // `privateThat`, minus private properties. See
-                        // `privateThat`.
-                        protectedThat,
+                            // `privateThat`, minus private properties. See
+                            // `privateThat`.
+                            protectedThat,
 
-                        // Containers of the parent. Used for inheritance. See
-                        // `container`.
-                        parentPublicContainer,
-                        parentProtectedContainer,
+                            // Containers of the parent. Used for
+                            // inheritance. See `container`.
+                            parentPublicContainer,
+                            parentProtectedContainer,
 
-                        // Containers to separate public, protected and private
-                        // variables so that privates can be discarded,
-                        // publics/protecteds can be inherited and/or
-                        // overridden, and finally publics can be returned by
-                        // the constructor.
-                        publicContainer,
-                        protectedContainer,
-                        privateContainer,
+                            // Containers to separate public, protected and
+                            // private variables so that privates can be
+                            // discarded, publics/protecteds can be inherited
+                            // and/or overridden, and finally publics can be
+                            // returned by the constructor.
+                            publicContainer,
+                            protectedContainer,
+                            privateContainer,
 
-                        // Serves as `this` within the constructor and
-                        // methods. Public, protected and private properties are
-                        // all settable and gettable on this object. For
-                        // inheritance purposes, anything set is secretly
-                        // delegated to corresponding properties on `container`.
-                        privateThat,
+                            // Serves as `this` within the constructor and
+                            // methods. Public, protected and private properties
+                            // are all settable and gettable on this object. For
+                            // inheritance purposes, anything set is secretly
+                            // delegated to corresponding properties on
+                            // `container`.
+                            privateThat,
 
-                        // Property descriptors delegating the setting and
-                        // getting of properties to other objects. See
-                        // `getDelegators`.
-                        publicDelegators,
-                        protectedDelegators,
-                        privateDelegators,
+                            // Property descriptors delegating the setting and
+                            // getting of properties to other objects. See
+                            // `getDelegators`.
+                            publicDelegators,
+                            protectedDelegators,
+                            privateDelegators,
 
-                        // Only developer-supplied arguments.
-                        constructorArguments;
+                            // Only developer-supplied arguments.
+                            constructorArguments;
 
-                    if (parent) {
+                        if (hasParent) {
 
-                        // Pass arguments to the parent in such a way as to
-                        // indicate an "inheriting" context.
-                        parentArguments = [INHERITING].concat(slice(arguments));
+                            // Pass arguments to the parent in such a way as to
+                            // indicate an "inheriting" context.
+                            parentArguments = [INHERITING].concat(slice(arguments));
 
-                        // Destructuringly assign the 3 values returned from the
-                        // parent.
-                        vessel = parent.apply(null, parentArguments);
-                        parentProtectedThat = vessel[0];
-                        parentPublicContainer = vessel[1];
-                        parentProtectedContainer = vessel[2];
+                            // Destructuringly assign the 3 values returned from
+                            // the parent.
+                            vessel = parent.apply(null, parentArguments);
+                            parentProtectedThat = vessel[0];
+                            parentPublicContainer = vessel[1];
+                            parentProtectedContainer = vessel[2];
 
-                        // Inherit the parent's public and protected properties.
-                        // Using `Object.create` in all the below cases enables
-                        // `Object.getPrototypeOf` as a "super" mechanism.
-                        protectedThat = create(parentProtectedThat);
-                        privateThat = create(parentProtectedThat);
-                        publicContainer = create(parentPublicContainer);
-                        protectedContainer = create(parentProtectedContainer);
+                            // Inherit the parent's public and protected
+                            // properties.  Using `Object.create` in all the
+                            // below cases enables `Object.getPrototypeOf` as a
+                            // "super" mechanism.
+                            protectedThat = create(parentProtectedThat);
+                            privateThat = create(parentProtectedThat);
+                            publicContainer = create(parentPublicContainer);
+                            protectedContainer = create(parentProtectedContainer);
 
-                    } else {
+                        } else {
 
-                        // Lower base case.
-                        protectedThat = {};
-                        privateThat = {};
-                        publicContainer = {};
-                        protectedContainer = {};
+                            // Lower base case.
+                            protectedThat = {};
+                            privateThat = {};
+                            publicContainer = {};
+                            protectedContainer = {};
 
-                    }
+                        }
 
-                    // The private container is always local to only this
-                    // constructor.
-                    privateContainer = {};
+                        // The private container is always local to only this
+                        // constructor.
+                        privateContainer = {};
 
-                    // Delegate properties from thats to containers.
-                    publicDelegators = getDelegators(publicContainer, publicNames);
-                    protectedDelegators = getDelegators(protectedContainer, protectedNames);
-                    privateDelegators = getDelegators(privateContainer, privateNames);
+                        // Delegate properties from thats to containers.
+                        publicDelegators = getDelegators(publicContainer, publicNames);
+                        protectedDelegators = getDelegators(protectedContainer, protectedNames);
+                        privateDelegators = getDelegators(privateContainer, privateNames);
 
-                    // Give the protected version limited access.
-                    setDelegators(protectedThat, publicStaticDelegators);
-                    setDelegators(protectedThat, protectedStaticDelegators);
-                    setDelegators(protectedThat, publicDelegators);
-                    setDelegators(protectedThat, protectedDelegators);
+                        // Give the protected version limited access.
+                        setDelegators(protectedThat, protectedStaticDelegators);
+                        setDelegators(protectedThat, publicDelegators);
+                        setDelegators(protectedThat, protectedDelegators);
 
-                    // Give the private version full access.
-                    setDelegators(privateThat, publicStaticDelegators);
-                    setDelegators(privateThat, protectedStaticDelegators);
-                    setDelegators(privateThat, privateStaticDelegators);
-                    setDelegators(privateThat, publicDelegators);
-                    setDelegators(privateThat, protectedDelegators);
-                    setDelegators(privateThat, privateDelegators);
+                        // Give the private version full access.
+                        setDelegators(privateThat, protectedStaticDelegators);
+                        setDelegators(privateThat, privateStaticDelegators);
+                        setDelegators(privateThat, publicDelegators);
+                        setDelegators(privateThat, protectedDelegators);
+                        setDelegators(privateThat, privateDelegators);
 
-                    // Make immutable.
-                    freeze(protectedThat);
-                    freeze(privateThat);
+                        // Make immutable.
+                        freeze(protectedThat);
+                        freeze(privateThat);
 
-                    if (isInheriting) {
-                        // Don't pass `INHERITING` to the constructor.
-                        constructorArguments = slice(arguments, 1);
-                    } else {
-                        constructorArguments = arguments;
-                    }
+                        if (isInheriting) {
+                            // Don't pass `INHERITING` to the constructor.
+                            constructorArguments = slice(arguments, 1);
+                        } else {
+                            constructorArguments = arguments;
+                        }
 
-                    // Invoke the constructor with `this` set to the delegator.
-                    constructor.apply(privateThat, constructorArguments);
+                        // Invoke the constructor with `this` set to the
+                        // delegator.
+                        constructor.apply(privateThat, constructorArguments);
 
-                    // Use recursion to accomplish inheritance.
-                    if (isInheriting) {
-                        // Make shared data available to inheritors.
-                        return [protectedThat,
-                                publicContainer,
-                                protectedContainer];
-                    }
+                        // Use recursion to accomplish inheritance.
+                        if (isInheriting) {
+                            // Make shared data available to inheritors.
+                            return [protectedThat,
+                                    publicContainer,
+                                    protectedContainer];
+                        }
 
-                    // Upper base case.
-                    return freeze(publicContainer);
-                };
+                        // Upper base case.
+                        return freeze(publicContainer);
+                    };
+
+                // Assign public statics to the factory.
+                setDelegators(factory, publicStaticDelegators);
+
+                return factory;
             };
 
         return snowman;
