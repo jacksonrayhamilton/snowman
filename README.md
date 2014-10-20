@@ -61,6 +61,10 @@ var snowman = require('snowman'),
     factory = snowman({});
 ```
 
+## Documentation
+
+Available [here](http://jacksonrayhamilton.github.io/snowman/global.html#snowman).
+
 ## Examples
 
 ```js
