@@ -26,6 +26,16 @@ module.exports = function (grunt) {
             }
         },
 
+        release: {
+            commitMessage: 'Release <%= version %>.',
+            tagMessage: 'Version <%= version %>.',
+            github: {
+                repo: 'jacksonrayhamilton/snowman',
+                usernameVar: 'GITHUB_USERNAME',
+                passwordVar: 'GITHUB_PASSWORD'
+            }
+        },
+
         uglify: {
             dist: {
                 options: {
