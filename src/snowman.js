@@ -213,7 +213,7 @@
 
                         } else {
 
-                            // Lower base case.
+                            // Lower base case. Create root containers.
                             protectedThat = {};
                             privateThat = {};
                             publicContainer = {};
@@ -229,6 +229,9 @@
                         publicDelegators = getDelegators(publicContainer, publicLocals);
                         protectedDelegators = getDelegators(protectedContainer, protectedLocals);
                         privateDelegators = getDelegators(privateContainer, privateLocals);
+
+                        // Expose public static properties.
+                        defineProperties(publicContainer, publicStatics);
 
                         // Give the protected version limited access.
                         defineProperties(protectedThat, publicStatics);
@@ -267,9 +270,10 @@
                                     protectedContainer];
                         }
 
-                        // Upper base case.
+                        // Make immutable.
                         freeze(publicContainer);
-                        // Expose the public API only.
+
+                        // Upper base case. Expose only the public API.
                         return publicContainer;
                     };
 

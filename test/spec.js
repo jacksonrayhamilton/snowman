@@ -67,10 +67,13 @@ describe('exposure', function () {
                     assert.strictEqual(this.h, 10);
                     assert.strictEqual(this.i, 11);
                 }
-            });
+            }),
 
-        a();
-        b();
+            aInstance = a(),
+            bInstance = b();
+
+        assert.strictEqual(aInstance.g, 4);
+        assert.strictEqual(bInstance.h, 10);
 
     });
 
@@ -202,13 +205,16 @@ describe('statics', function () {
                     assert.strictEqual(this.E, 4, 'Inherited.');
                     assert.strictEqual(this.F, 9, 'Overriden.');
                 }
-            });
+            }),
+
+            aInstance = a(),
+            bInstance = b();
+
+        assert.strictEqual(aInstance.E, 4);
+        assert.strictEqual(bInstance.F, 9);
 
         assert.strictEqual(a.G, 6);
         assert.strictEqual(b.G, 10);
-
-        a();
-        b();
 
     });
 
