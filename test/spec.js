@@ -84,6 +84,14 @@ describe('super', function () {
     it('should expose inherited properties via `Object.getPrototypeOf`', function () {
 
         var a = snowman({
+            static: {
+                protected: {
+                    A: 0
+                },
+                public: {
+                    B: 1
+                }
+            },
             local: {
                 protected: ['a'],
                 public: ['b']
@@ -95,12 +103,22 @@ describe('super', function () {
         }),
             b = snowman({
                 extends: a,
+                static: {
+                    protected: {
+                        A: 2
+                    },
+                    public: {
+                        B: 3
+                    }
+                },
                 local: {
                     protected: ['a'],
                     public: ['b']
                 },
                 constructor: function () {
                     var parent = Object.getPrototypeOf(this);
+                    assert.strictEqual(parent.A, 0);
+                    assert.strictEqual(parent.B, 1);
                     assert.strictEqual(parent.a, 0);
                     assert.strictEqual(parent.b, 1);
                     this.a = 2;
@@ -111,6 +129,14 @@ describe('super', function () {
             }),
             c = snowman({
                 extends: b,
+                static: {
+                    protected: {
+                        A: 4
+                    },
+                    public: {
+                        B: 5
+                    }
+                },
                 local: {
                     protected: ['a'],
                     public: ['b']
@@ -118,8 +144,12 @@ describe('super', function () {
                 constructor: function () {
                     var parent = Object.getPrototypeOf(this),
                         grandparent = Object.getPrototypeOf(parent);
+                    assert.strictEqual(grandparent.A, 0);
+                    assert.strictEqual(grandparent.B, 1);
                     assert.strictEqual(grandparent.a, 0);
                     assert.strictEqual(grandparent.b, 1);
+                    assert.strictEqual(parent.A, 2);
+                    assert.strictEqual(parent.B, 3);
                     assert.strictEqual(parent.a, 2);
                     assert.strictEqual(parent.b, 3);
                     this.a = 4;
@@ -136,10 +166,16 @@ describe('super', function () {
                     var parent = Object.getPrototypeOf(this),
                         grandparent = Object.getPrototypeOf(parent),
                         greatgrandparent = Object.getPrototypeOf(grandparent);
+                    assert.strictEqual(greatgrandparent.A, 0);
+                    assert.strictEqual(greatgrandparent.B, 1);
                     assert.strictEqual(greatgrandparent.a, 0);
                     assert.strictEqual(greatgrandparent.b, 1);
+                    assert.strictEqual(grandparent.A, 2);
+                    assert.strictEqual(grandparent.B, 3);
                     assert.strictEqual(grandparent.a, 2);
                     assert.strictEqual(grandparent.b, 3);
+                    assert.strictEqual(parent.A, 4);
+                    assert.strictEqual(parent.B, 5);
                     assert.strictEqual(parent.a, 4);
                     assert.strictEqual(parent.b, 5);
                 }
