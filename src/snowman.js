@@ -115,23 +115,27 @@
 
             snowman = function (options) {
 
+                options = options || {};
+                options.local = options.local || {};
+                options.static = options.static || {};
+
                 var constructor = options.constructor || noopFunction,
                     constructorApply = Function.prototype.apply.bind(constructor),
 
                     hasParent = options.extends !== undefined,
                     parent = options.extends,
-                    parentApply = Function.prototype.apply.bind(parent, null),
+                    parentApplyAsNull = Function.prototype.apply.bind(parent, null),
 
-                    privateNames = options.private || noopArray,
-                    protectedNames = options.protected || noopArray,
-                    publicNames = options.public || noopArray,
+                    privateLocals = options.local.private || noopArray,
+                    protectedLocals = options.local.protected || noopArray,
+                    publicLocals = options.local.public || noopArray,
 
                     // Scope static delegators outside the factory so that all
                     // instances will share the same ones.
-                    privateStatics = getStatics(options.privateStatic || noopObject),
-                    protectedStatics = getStatics(options.protectedStatic || noopObject),
-                    publicStatics = getStatics(options.publicStatic || noopObject),
-                    factoryStatics = getStatics(options.factoryStatic || noopObject),
+                    privateStatics = getStatics(options.static.private || noopObject),
+                    protectedStatics = getStatics(options.static.protected || noopObject),
+                    publicStatics = getStatics(options.static.public || noopObject),
+                    factoryStatics = getStatics(options.static.factory || noopObject),
 
                     factory = function (inheriting) {
 
@@ -193,7 +197,7 @@
 
                             // Destructuringly assign the 3 values returned from
                             // the parent.
-                            vessel = parentApply(parentArguments);
+                            vessel = parentApplyAsNull(parentArguments);
                             parentProtectedThat = vessel[0];
                             parentPublicContainer = vessel[1];
                             parentProtectedContainer = vessel[2];
@@ -222,9 +226,9 @@
                         privateContainer = {};
 
                         // Delegate properties from thats to containers.
-                        publicDelegators = getDelegators(publicContainer, publicNames);
-                        protectedDelegators = getDelegators(protectedContainer, protectedNames);
-                        privateDelegators = getDelegators(privateContainer, privateNames);
+                        publicDelegators = getDelegators(publicContainer, publicLocals);
+                        protectedDelegators = getDelegators(protectedContainer, protectedLocals);
+                        privateDelegators = getDelegators(privateContainer, privateLocals);
 
                         // Give the protected version limited access.
                         defineProperties(protectedThat, publicStatics);

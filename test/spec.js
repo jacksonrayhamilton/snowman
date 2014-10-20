@@ -11,9 +11,11 @@ describe('exposure', function () {
     it('should expose only visible properties', function () {
 
         var a = snowman({
-            private: ['a', 'b'],
-            protected: ['d', 'e'],
-            public: ['g', 'h'],
+            local: {
+                private: ['a', 'b'],
+                protected: ['d', 'e'],
+                public: ['g', 'h']
+            },
             constructor: function () {
                 assert.strictEqual(this.a, undefined);
                 assert.strictEqual(this.b, undefined);
@@ -37,9 +39,11 @@ describe('exposure', function () {
         }),
             b = snowman({
                 extends: a,
-                private: ['b', 'c'],
-                protected: ['e', 'f'],
-                public: ['h', 'i'],
+                local: {
+                    private: ['b', 'c'],
+                    protected: ['e', 'f'],
+                    public: ['h', 'i']
+                },
                 constructor: function () {
                     assert.strictEqual(this.a, undefined, 'Private property is not inherited.');
                     assert.strictEqual(this.b, undefined, 'Private property is not inherited.');
@@ -77,8 +81,10 @@ describe('super', function () {
     it('should expose inherited properties via `Object.getPrototypeOf`', function () {
 
         var a = snowman({
-            protected: ['a'],
-            public: ['b'],
+            local: {
+                protected: ['a'],
+                public: ['b']
+            },
             constructor: function () {
                 this.a = 0;
                 this.b = 1;
@@ -86,8 +92,10 @@ describe('super', function () {
         }),
             b = snowman({
                 extends: a,
-                protected: ['a'],
-                public: ['b'],
+                local: {
+                    protected: ['a'],
+                    public: ['b']
+                },
                 constructor: function () {
                     var parent = Object.getPrototypeOf(this);
                     assert.strictEqual(parent.a, 0);
@@ -100,8 +108,10 @@ describe('super', function () {
             }),
             c = snowman({
                 extends: b,
-                protected: ['a'],
-                public: ['b'],
+                local: {
+                    protected: ['a'],
+                    public: ['b']
+                },
                 constructor: function () {
                     var parent = Object.getPrototypeOf(this),
                         grandparent = Object.getPrototypeOf(parent);
@@ -115,8 +125,10 @@ describe('super', function () {
             }),
             d = snowman({
                 extends: c,
-                protected: ['a'],
-                public: ['b'],
+                local: {
+                    protected: ['a'],
+                    public: ['b']
+                },
                 constructor: function () {
                     var parent = Object.getPrototypeOf(this),
                         grandparent = Object.getPrototypeOf(parent),
@@ -143,20 +155,22 @@ describe('statics', function () {
     it('should predefine static properties', function () {
 
         var a = snowman({
-            privateStatic: {
-                A: 0,
-                B: 1
-            },
-            protectedStatic: {
-                C: 2,
-                D: 3
-            },
-            publicStatic: {
-                E: 4,
-                F: 5
-            },
-            factoryStatic: {
-                G: 6
+            static: {
+                private: {
+                    A: 0,
+                    B: 1
+                },
+                protected: {
+                    C: 2,
+                    D: 3
+                },
+                public: {
+                    E: 4,
+                    F: 5
+                },
+                factory: {
+                    G: 6
+                }
             },
             constructor: function () {
                 assert.strictEqual(this.A, 0);
@@ -166,17 +180,19 @@ describe('statics', function () {
         }),
             b = snowman({
                 extends: a,
-                privateStatic: {
-                    B: 7
-                },
-                protectedStatic: {
-                    D: 8
-                },
-                publicStatic: {
-                    F: 9
-                },
-                factoryStatic: {
-                    G: 10
+                static: {
+                    private: {
+                        B: 7
+                    },
+                    protected: {
+                        D: 8
+                    },
+                    public: {
+                        F: 9
+                    },
+                    factory: {
+                        G: 10
+                    }
                 },
                 constructor: function () {
                     assert.strictEqual(this.A, undefined, 'Private property is not inherited.');
@@ -203,29 +219,33 @@ describe('methods', function () {
     it('should reveal properties via `this` in methods', function () {
 
         var a = snowman({
-            protectedStatic: {
-                D: function () {
-                    assert.strictEqual(this.a, 0);
-                    assert.strictEqual(this.b, 1);
-                    assert.strictEqual(this.c, 2);
+            static: {
+                protected: {
+                    D: function () {
+                        assert.strictEqual(this.a, 0);
+                        assert.strictEqual(this.b, 1);
+                        assert.strictEqual(this.c, 2);
+                    },
+                    // Will be called in the context of the child.
+                    E: function () {
+                        assert.strictEqual(this.a, 3);
+                    }
                 },
-                // Will be called in the context of the child.
-                E: function () {
-                    assert.strictEqual(this.a, 3);
+                factory: {
+                    // Will be called in the context of the factory.
+                    F: function () {
+                        return this.G();
+                    },
+                    G: function () {
+                        return 0;
+                    }
                 }
             },
-            factoryStatic: {
-                // Will be called in the context of the factory.
-                F: function () {
-                    return this.G();
-                },
-                G: function () {
-                    return 0;
-                }
+            local: {
+                private: ['a'],
+                protected: ['b'],
+                public: ['c']
             },
-            private: ['a'],
-            protected: ['b'],
-            public: ['c'],
             constructor: function () {
                 this.a = 0;
                 this.b = 1;
@@ -235,14 +255,18 @@ describe('methods', function () {
         }),
             b = snowman({
                 extends: a,
-                privateStatic: {
-                    H: function () {
-                        assert.strictEqual(this.a, 3);
+                static: {
+                    private: {
+                        H: function () {
+                            assert.strictEqual(this.a, 3);
+                        }
                     }
                 },
-                private: ['a'],
-                protected: ['b'],
-                public: ['c'],
+                local: {
+                    private: ['a'],
+                    protected: ['b'],
+                    public: ['c']
+                },
                 constructor: function () {
                     this.a = 3;
                     this.b = 4;
