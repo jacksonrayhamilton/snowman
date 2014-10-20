@@ -148,41 +148,48 @@ describe('statics', function () {
                 B: 1
             },
             protectedStatic: {
-                D: 2,
-                E: 3
+                C: 2,
+                D: 3
             },
             publicStatic: {
-                G: 4,
-                H: 5
+                E: 4,
+                F: 5
+            },
+            factoryStatic: {
+                G: 6
             },
             constructor: function () {
                 assert.strictEqual(this.A, 0);
-                assert.strictEqual(this.D, 2);
-                assert.strictEqual(this.G, undefined, 'Public static property is not on `this`.');
+                assert.strictEqual(this.C, 2);
+                assert.strictEqual(this.E, 4);
             }
         }),
             b = snowman({
                 extends: a,
                 privateStatic: {
-                    B: 6
+                    B: 7
                 },
                 protectedStatic: {
-                    E: 8
+                    D: 8
                 },
                 publicStatic: {
-                    H: 10
+                    F: 9
+                },
+                factoryStatic: {
+                    G: 10
                 },
                 constructor: function () {
                     assert.strictEqual(this.A, undefined, 'Private property is not inherited.');
-                    assert.strictEqual(this.B, 6, 'Overriden.');
-                    assert.strictEqual(this.D, 2, 'Inherited.');
-                    assert.strictEqual(this.E, 8, 'Overriden.');
-                    assert.strictEqual(this.H, undefined, 'Public static property is not on `this`.');
+                    assert.strictEqual(this.B, 7, 'Overriden.');
+                    assert.strictEqual(this.C, 2, 'Inherited.');
+                    assert.strictEqual(this.D, 8, 'Overriden.');
+                    assert.strictEqual(this.E, 4, 'Inherited.');
+                    assert.strictEqual(this.F, 9, 'Overriden.');
                 }
             });
 
-        assert.strictEqual(a.G, 4);
-        assert.strictEqual(b.H, 10);
+        assert.strictEqual(a.G, 6);
+        assert.strictEqual(b.G, 10);
 
         a();
         b();
@@ -207,7 +214,7 @@ describe('methods', function () {
                     assert.strictEqual(this.a, 3);
                 }
             },
-            publicStatic: {
+            factoryStatic: {
                 // Will be called in the context of the factory.
                 F: function () {
                     return this.G();

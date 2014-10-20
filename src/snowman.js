@@ -131,6 +131,7 @@
                     privateStatics = getStatics(options.privateStatic || noopObject),
                     protectedStatics = getStatics(options.protectedStatic || noopObject),
                     publicStatics = getStatics(options.publicStatic || noopObject),
+                    factoryStatics = getStatics(options.factoryStatic || noopObject),
 
                     factory = function (inheriting) {
 
@@ -226,11 +227,13 @@
                         privateDelegators = getDelegators(privateContainer, privateNames);
 
                         // Give the protected version limited access.
+                        defineProperties(protectedThat, publicStatics);
                         defineProperties(protectedThat, protectedStatics);
                         defineProperties(protectedThat, publicDelegators);
                         defineProperties(protectedThat, protectedDelegators);
 
                         // Give the private version full access.
+                        defineProperties(privateThat, publicStatics);
                         defineProperties(privateThat, protectedStatics);
                         defineProperties(privateThat, privateStatics);
                         defineProperties(privateThat, publicDelegators);
@@ -266,8 +269,8 @@
                         return publicContainer;
                     };
 
-                // Assign public statics to the factory.
-                defineProperties(factory, publicStatics);
+                // Assign factory statics to the factory.
+                defineProperties(factory, factoryStatics);
 
                 // Make immutable.
                 freeze(factory);
