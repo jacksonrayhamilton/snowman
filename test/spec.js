@@ -145,9 +145,9 @@ describe('statics', function () {
         var lastAofA,
             lastAofB,
             a = snowman({
-                private: [{
+                privateStatic: {
                     a: {}
-                }],
+                },
                 constructor: function () {
                     assert(typeof this.a === 'object');
                     if (lastAofA) {
@@ -158,11 +158,11 @@ describe('statics', function () {
             }),
             b = snowman({
                 extends: a,
-                private: [{
+                privateStatic: {
                     a: function () {
                         return;
                     }
-                }],
+                },
                 constructor: function () {
                     assert(typeof this.a === 'function');
                     if (lastAofB) {
@@ -187,11 +187,12 @@ describe('methods', function () {
     it('should reveal properties via `this` in methods', function () {
 
         var a = snowman({
-            private: [{
+            privateStatic: {
                 d: function () {
                     assert.strictEqual(this.a, 0);
                 }
-            }, 'a'],
+            },
+            private: ['a'],
             protected: ['b'],
             public: ['c'],
             constructor: function () {
@@ -203,11 +204,12 @@ describe('methods', function () {
         }),
             b = snowman({
                 extends: a,
-                private: [{
+                privateStatic: {
                     d: function () {
                         assert.strictEqual(this.a, 3);
                     }
-                }, 'a'],
+                },
+                private: ['a'],
                 protected: ['b'],
                 public: ['c'],
                 constructor: function () {

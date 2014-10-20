@@ -43,6 +43,7 @@
             defineProperties = Object.defineProperties,
             freeze = Object.freeze,
             hasOwnProperty = Function.prototype.call.bind(Object.prototype.hasOwnProperty),
+            isArray = Array.isArray,
             keys = Object.keys,
             slice = Function.prototype.call.bind(Array.prototype.slice),
 
@@ -74,15 +75,7 @@
             getDelegators = function (receiver, names) {
                 var map = {};
                 names.forEach(function (name) {
-                    var object = name;
-                    if (typeof name === 'object') {
-                        keys(name).forEach(function (name) {
-                            receiver[name] = object[name];
-                            map[name] = getDelegator(receiver, name, true);
-                        });
-                    } else {
-                        map[name] = getDelegator(receiver, name, false);
-                    }
+                    map[name] = getDelegator(receiver, name, false);
                 });
                 return map;
             },
@@ -102,13 +95,28 @@
             // public members.
             INHERITING = {},
 
+            getStaticDelegators = function (receiver, names) {
+                var map = {};
+                keys(names).forEach(function (name) {
+                    receiver[name] = names[name];
+                    map[name] = getDelegator(receiver, name, true);
+                });
+                return map;
+            },
+
             snowman = function (options) {
 
                 var constructor = options.constructor,
                     parent = options.extends,
                     privateNames = options.private || empty,
                     protectedNames = options.protected || empty,
-                    publicNames = options.public || empty;
+                    publicNames = options.public || empty,
+
+                    // Scope static delegators outside the factory so that all
+                    // instances will share the same ones.
+                    privateStaticDelegators = getStaticDelegators({}, options.privateStatic || {}),
+                    protectedStaticDelegators = getStaticDelegators({}, options.protectedStatic || {}),
+                    publicStaticDelegators = getStaticDelegators({}, options.publicStatic || {});
 
                 return function (inheritanceContext) {
 
@@ -201,10 +209,15 @@
                     privateDelegators = getDelegators(privateContainer, privateNames);
 
                     // Give the protected version limited access.
+                    setDelegators(protectedThat, publicStaticDelegators);
+                    setDelegators(protectedThat, protectedStaticDelegators);
                     setDelegators(protectedThat, publicDelegators);
                     setDelegators(protectedThat, protectedDelegators);
 
                     // Give the private version full access.
+                    setDelegators(privateThat, publicStaticDelegators);
+                    setDelegators(privateThat, protectedStaticDelegators);
+                    setDelegators(privateThat, privateStaticDelegators);
                     setDelegators(privateThat, publicDelegators);
                     setDelegators(privateThat, protectedDelegators);
                     setDelegators(privateThat, privateDelegators);
