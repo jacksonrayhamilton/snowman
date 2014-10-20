@@ -226,23 +226,38 @@ describe('methods', function () {
 
         var a = snowman({
             static: {
-                protected: {
-                    D: function () {
+                private: {
+                    A: function () {
                         assert.strictEqual(this.a, 0);
                         assert.strictEqual(this.b, 1);
                         assert.strictEqual(this.c, 2);
-                    },
-                    // Will be called in the context of the child.
-                    E: function () {
-                        assert.strictEqual(this.a, 3);
+                    }
+                },
+                protected: {
+                    B: function (callingFromA) {
+                        // An instance of b would not have the private property
+                        // `a`.
+                        if (callingFromA) {
+                            assert.strictEqual(this.a, 0);
+                        }
+                        assert.strictEqual(this.b, 1);
+                        assert.strictEqual(this.c, 2);
+                    }
+                },
+                public: {
+                    C: function (callingFromA) {
+                        if (callingFromA) {
+                            assert.strictEqual(this.a, 0);
+                        }
+                        assert.strictEqual(this.b, 1);
+                        assert.strictEqual(this.c, 2);
                     }
                 },
                 factory: {
-                    // Will be called in the context of the factory.
-                    F: function () {
-                        return this.G();
+                    D: function () {
+                        return this.E();
                     },
-                    G: function () {
+                    E: function () {
                         return 0;
                     }
                 }
@@ -256,35 +271,26 @@ describe('methods', function () {
                 this.a = 0;
                 this.b = 1;
                 this.c = 2;
-                this.D();
+                this.A();
+                this.B(true);
+                this.C(true);
             }
         }),
             b = snowman({
                 extends: a,
-                static: {
-                    private: {
-                        H: function () {
-                            assert.strictEqual(this.a, 3);
-                        }
-                    }
-                },
-                local: {
-                    private: ['a'],
-                    protected: ['b'],
-                    public: ['c']
-                },
                 constructor: function () {
-                    this.a = 3;
-                    this.b = 4;
-                    this.c = 5;
-                    this.E();
-                    this.H();
+                    assert.strictEqual(this.A, undefined);
+                    this.B();
+                    this.C();
                 }
-            });
+            }),
 
-        a();
-        b();
-        assert.strictEqual(a.F(), 0);
+            aInstance = a(),
+            bInstance = b();
+
+        aInstance.C(true);
+        bInstance.C();
+        a.D();
 
     });
 
