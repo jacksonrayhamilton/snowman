@@ -145,4 +145,14 @@ var snowman = require('snowman'),
 }());
 ```
 
-For more, see `tests/`.
+For more examples, see `tests/`.
+
+## Development
+
+```bash
+# Watch for changes and run tests.
+grunt watch
+
+# Lint, test, build.
+grunt
+```
