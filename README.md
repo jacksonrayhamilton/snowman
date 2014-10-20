@@ -18,13 +18,27 @@ secure, if not completely locked-away, from malicious 3rd-parties. No more
 
 Let it snow, let it snow, let it snow... ❄
 
-## Usage
+## Installing
 
 Browser:
 
-```html
-<script src="snowman.js"></script>
+```bash
+bower install snowman
 ```
+
+```html
+<script src="bower_components/snowman/snowman.js"></script>
+```
+
+Node:
+
+```bash
+npm install snowman
+```
+
+## Usage
+
+Via browser global:
 
 ```js
 (function (snowman) {
@@ -40,11 +54,7 @@ require(['snowman'], function (snowman) {
 });
 ```
 
-Node / CommonJS:
-
-```bash
-npm install snowman
-```
+CommonJS:
 
 ```js
 var snowman = require('snowman'),
