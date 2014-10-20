@@ -53,4 +53,96 @@ var snowman = require('snowman'),
 
 ## Examples
 
-See `tests/`.
+```js
+(function () {
+
+    'use strict';
+
+    var personFactory = snowman({
+        static: {
+            protected: {
+                isBirthday: function () {
+                    var today = new Date();
+                    return today.getMonth() === this.birthday.getMonth() &&
+                        today.getDate() === this.birthday.getDate();
+                }
+            },
+            public: {
+                consultOnAge: function () {
+                    console.log('I\'m ' + this.age + '.');
+                },
+                consultOnBirthday: function () {
+                    if (this.isBirthday()) {
+                        console.log('It\'s my birthday! How did you guess?');
+                    } else {
+                        console.log('It\'s my un-birthday.');
+                    }
+                },
+                salutation: function () {
+                    console.log('The name\'s ' + this.name + '.');
+                }
+            }
+        },
+        local: {
+            private: ['birthday'],
+            protected: ['age'],
+            public: ['name']
+        },
+        constructor: function (spec) {
+            this.birthday = spec.birthday;
+            this.age = spec.age;
+            this.name = spec.name;
+        }
+    }),
+        potentiallyMoreExperiencedFactory = snowman({
+            extends: personFactory,
+            static: {
+                public: {
+                    consultOnAge: function () {
+                        var parent = Object.getPrototypeOf(this);
+                        if (this.age >= 45) {
+                            console.log('None of your business.');
+                        } else {
+                            parent.consultOnAge();
+                        }
+                    }
+                }
+            }
+        }),
+
+        joe = personFactory({
+            name: 'Joe',
+            age: 25,
+            birthday: new Date()
+        }),
+
+        sam = potentiallyMoreExperiencedFactory({
+            name: 'Sam',
+            age: 45,
+            birthday: new Date(Date.now() - 1000 * 60 * 60 * 24)
+        }),
+
+        bobby = potentiallyMoreExperiencedFactory({
+            age: 44
+        });
+
+    console.log(joe.name); // "Joe"
+    console.log(joe.age); // undefined
+    console.log(joe.birthday); // undefined
+    joe.salutation(); // The name's Joe.
+    joe.consultOnBirthday(); // It's my birthday! How did you guess?
+    joe.consultOnAge(); // I'm 25.
+
+    console.log(sam.name); // "Sam"
+    console.log(sam.age); // undefined
+    console.log(sam.birthday); // undefined
+    sam.salutation(); // The name's Sam.
+    sam.consultOnBirthday(); // It's my un-birthday.
+    sam.consultOnAge(); // None of your business.
+
+    bobby.consultOnAge(); // I'm 44.
+
+}());
+```
+
+For more, see `tests/`.
