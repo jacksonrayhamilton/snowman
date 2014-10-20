@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Global</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Global</h1>
+    
+    
+
+
+
+<section>
+    
+<header>
+    <h2>
+    
+    </h2>
+    
+</header>  
+
+<article>
+    <div class="container-overview">
+    
+    
+    
+        
+        
+        
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+        
+        
+    
+    </div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        <h3 class="subsection-title">Methods</h3>
+        
+        <dl>
+            
+<dt>
+    <h4 class="name" id="snowman"><span class="type-signature"></span>snowman<span class="signature">(options)</span><span class="type-signature"> &rarr; {function}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        Creates factory functions for objects with the following
+features:
+
+<ul>
+    <li>Constant private, protected and public members</li>
+    <li>Private, protected and public static members</li>
+    <li>"Super" via <code>Object.getPrototypeOf</code></li>
+    <li>Totally immutable objects via <code>Object.freeze</code></li>
+</ul>
+
+Factory functions perform parasitic inheritance using a host
+defined by <code>options.extends</code>. Internals are frozen at
+each step to ensure total immutability.
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Container for arguments.
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>extends</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Snowman-generated factory of
+the parent to extend. If ommitted, the object inherits from
+<code>Object.prototype</code>.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>constructor</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Constructor containing all
+the logic a constructor function (such as one called with
+<code>new</code>) normally would have. The constructor should
+define local private, protected, and public members. The factory
+returned by the <code>snowman</code> function calls the
+constructor in the constructed object's own context; thus, within
+the constructor, <code>this</code> reveals both local and static
+private, protected and public properties of the constructed
+object and its parents. Calling
+<code>Object.getPrototypeOf</code> on <code>this</code> reveals
+the parent's local and static protected and public
+properties. <code>this</code> is unconfigurable, unenumerable and
+unwritable (though there are setters for properties defined in
+<code>options.local</code> which make those properties appear
+writable).</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>static</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Container for static
+properties. "Static" in this context just means that the value is
+predefined and assumed to be immutable, thus it is reused for all
+instances. Ideal for methods and CONSTANTS. By convention, and to
+preserve the <code>this</code> namespace, CONSTANTS should be
+written in ALL_CAPS.
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>private</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Map of property names to
+values. Values are exposed to <code>this</code> within the
+context of the constructor and the object's methods only.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>protected</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Map of property names to
+values. Values are exposed to <code>this</code> and children.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>public</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Map of property names to
+values. Values are exposed to <code>this</code>, children and as
+properties on the object returned by the factory.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>factory</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Map of property names to
+values. Values are exposed on the returned factory.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+            </td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>local</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Container for
+instance properties. All property names specified are
+uninitialized and are expected to be assigned-to in the
+constructor. Additionally, they are all constant, so they can
+only be assigned-to once, otherwise an error will be thrown.
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>private</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;String></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Array of property
+names. Values are exposed to <code>this</code> within the context
+of the constructor and the object's methods only.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>protected</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;String></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Array of property
+names. Values are exposed to <code>this</code> and children.</td>
+        </tr>
+	
+	
+	
+        <tr>
+            
+                <td class="name"><code>public</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;String></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Array of property
+names. Values are exposed to <code>this</code>, children and as
+properties on the object returned by the factory.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+            </td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+            </td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+    
+    
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="snowman.js.html">snowman.js</a>, <a href="snowman.js.html#line118">line 118</a>
+    </li></ul></dd>
+    
+    
+    
+    
+    
+    
+    
+</dl>
+
+    
+    
+
+    
+
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Factory for the defined object, which doubles
+as a host factory for parasitic inheritors.
+</div>
+
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">function</span>
+
+
+	</dd>
+</dl>
+
+        
+    
+    
+</dd>
+
+        </dl>
+    
+    
+    
+    
+    
+</article>
+
+</section>  
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Global</h3><ul><li><a href="global.html#snowman">snowman</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a> on Mon Oct 20 2014 04:35:27 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
