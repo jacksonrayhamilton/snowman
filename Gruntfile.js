@@ -8,7 +8,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-jsdoc');
-    grunt.loadNpmTasks('grunt-jslint');
+    grunt.loadNpmTasks('grunt-jslinted');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-release');
 
@@ -29,9 +29,9 @@ module.exports = function (grunt) {
             }
         },
 
-        jslint: {
+        jslinted: {
             all: {
-                src: 'snowman.js'
+                src: ['snowman.js', 'test/*.js']
             }
         },
 
@@ -77,9 +77,10 @@ module.exports = function (grunt) {
 
     });
 
+    grunt.registerTask('lint', ['jslinted']);
     grunt.registerTask('test', ['mochaTest']);
     grunt.registerTask('build', ['uglify']);
     grunt.registerTask('document', ['clean:doc', 'jsdoc']);
-    grunt.registerTask('default', ['jslint', 'test', 'build']);
+    grunt.registerTask('default', ['lint', 'test', 'build']);
 
 };
